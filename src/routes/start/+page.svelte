@@ -12,14 +12,24 @@
 	};
 
 	// props (internal)
+	const colorDictionary = {
+		primary: 'text-primary-500',
+		secondary: 'text-secondary-500',
+		tertiary: 'text-tertiary-500',
+		quartery: 'text-quartery-500',
+		quinary: 'text-quinary-500',
+		senary: 'text-senary-500',
+		septenary: 'text-septenary-500',
+		octanary: 'text-octanary-500'
+	};
 	const modal: { quit: Modal } = { quit: {} };
 	const stateDictionary = {
 		computer: "Computer's Turn",
-		draw: 'Draw',
+		draw: '',
 		init: '',
-		lose: 'You Lose',
+		lose: '',
 		user: 'Your Turn',
-		win: 'You Win'
+		win: ''
 	};
 	const winningCombinations = [
 		[0, 1, 2],
@@ -58,8 +68,16 @@
 </script>
 
 <div class="flex flex-grow flex-col p-6">
-	<div class="text-center text-[2rem] font-semibold">
-		{stateDictionary[$game.state]}
+	<div class="relative min-h-[3rem] text-center text-[2rem] font-semibold">
+		{#each Object.keys(stateDictionary) as key}
+			<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+				{#if $game.state === key}
+					<div class="whitespace-nowrap" transition:grow>
+						{stateDictionary[$game.state]}
+					</div>
+				{/if}
+			</div>
+		{/each}
 	</div>
 	<div class="flex flex-grow items-center justify-center">
 		<div class="grid flex-grow grid-cols-3 grid-rows-3">
@@ -81,18 +99,28 @@
 								)}
 								disabled={$game.state === 'user' ? undefined : 'disabled'}
 								on:click={() => game.update.cell(i)}
-							>
-								{i}
-							</Button>
+							/>
 						</div>
 					{/if}
 					{#if cell === 'O'}
-						<div class="flex flex-grow" in:grow>
+						<div
+							class={twMerge(
+								'flex flex-grow',
+								$game.symbol === 'O' ? colorDictionary[$game.color] : ''
+							)}
+							in:grow
+						>
 							<O />
 						</div>
 					{/if}
 					{#if cell === 'X'}
-						<div class="flex flex-grow" in:grow>
+						<div
+							class={twMerge(
+								'flex flex-grow',
+								$game.symbol === 'X' ? colorDictionary[$game.color] : ''
+							)}
+							in:grow
+						>
 							<X />
 						</div>
 					{/if}
@@ -100,7 +128,15 @@
 			{/each}
 		</div>
 	</div>
-	<Button on:click={modal.quit.open}>Quit</Button>
+	<div class="relative flex min-h-[3rem] flex-col">
+		<div class="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2">
+			{#if $game.state === 'computer' || $game.state === 'user'}
+				<div class="flex h-full w-full flex-col" transition:grow>
+					<Button on:click={modal.quit.open}>Quit</Button>
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>
 
 <Modal
@@ -114,5 +150,25 @@
 	<div class="grid grid-cols-2 gap-2">
 		<Button class={$theme.buttonContrast} on:click={modal.quit.close}>Cancel</Button>
 		<A class={twMerge($theme.button, $theme.buttonError)} href="/">Quit</A>
+	</div>
+</Modal>
+<Modal
+	class="space-y-8"
+	isOpen={$game.state === 'draw' || $game.state === 'lose' || $game.state === 'win'}
+>
+	<div>
+		{#if $game.state === 'draw'}
+			Draw
+		{/if}
+		{#if $game.state === 'lose'}
+			You Lose
+		{/if}
+		{#if $game.state === 'win'}
+			You Win
+		{/if}
+	</div>
+	<div class="grid grid-cols-2 gap-2">
+		<A class={twMerge($theme.button, $theme.buttonContrast)} href="/">Quit</A>
+		<Button on:click={() => game.start()}>Play Again</Button>
 	</div>
 </Modal>
