@@ -4,6 +4,11 @@
 	import { ChevronLeft } from '$icons';
 	import { game, theme } from '$stores';
 
+	// handlers
+	const startClickHandler = (e) => {
+		game.start();
+	};
+
 	// props (internal)
 	const colors = [
 		{
@@ -118,5 +123,5 @@
 			</div>
 		</div>
 	</div>
-	<A class={twMerge($theme.button)} href="/start">Start</A>
+	<A class={twMerge($theme.button)} href="/start" on:click={startClickHandler}>Start</A>
 </div>
