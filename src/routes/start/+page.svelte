@@ -4,19 +4,63 @@
 	import { game, theme } from '$stores';
 	import { grow } from '$transitions';
 
-	// props (internal)
-	let modal: {
+	type Modal = {
 		close?: (() => boolean) | undefined;
 		isOpen?: boolean;
 		open?: (() => boolean) | undefined;
 		toggle?: (() => boolean) | undefined;
-	} = {};
+	};
 
-	$: if ($game.currentPlayer === 'computer') game.computer.choose();
+	// props (internal)
+	const modal: { quit: Modal } = { quit: {} };
+	const stateDictionary = {
+		computer: "Computer's Turn",
+		draw: 'Draw',
+		init: '',
+		lose: 'You Lose',
+		user: 'Your Turn',
+		win: 'You Win'
+	};
+	const winningCombinations = [
+		[0, 1, 2],
+		[3, 4, 5],
+		[6, 7, 8],
+		[0, 3, 6],
+		[1, 4, 7],
+		[2, 5, 8],
+		[0, 4, 8],
+		[2, 4, 6]
+	];
+
+	// check if is a draw
+	$: if ([...$game.board].filter((cell) => cell === null).length === 0) $game.state = 'draw';
+
+	// check if player loses
+	$: if (
+		[...winningCombinations].filter(
+			(winningCombination) =>
+				winningCombination.filter(
+					(index) => $game.board[index] !== $game.symbol && $game.board[index] !== null
+				).length === 3
+		).length > 0
+	)
+		$game.state = 'lose';
+
+	// check if player wins
+	$: if (
+		[...winningCombinations].filter(
+			(winningCombination) =>
+				winningCombination.filter((index) => $game.board[index] === $game.symbol).length === 3
+		).length > 0
+	)
+		$game.state = 'win';
+	$: if ($game.state === 'computer') game.computer.choose();
 </script>
 
 <div class="flex flex-grow flex-col p-6">
-	<!-- {JSON.stringify($game, null, 2)} -->
+	<div class="text-center text-[2rem] font-semibold">
+		{stateDictionary[$game.state]}
+	</div>
 	<div class="flex flex-grow items-center justify-center">
 		<div class="grid flex-grow grid-cols-3 grid-rows-3">
 			{#each $game.board as cell, i}
@@ -30,7 +74,12 @@
 					{#if cell === null}
 						<div class="flex flex-grow" in:grow>
 							<Button
-								class={twMerge($theme.buttonTransparent, 'flex flex-grow rounded-none')}
+								class={twMerge(
+									$theme.buttonTransparent,
+									'disabled:bg-transparent',
+									'flex flex-grow rounded-none'
+								)}
+								disabled={$game.state === 'user' ? undefined : 'disabled'}
 								on:click={() => game.update.cell(i)}
 							>
 								{i}
@@ -51,19 +100,19 @@
 			{/each}
 		</div>
 	</div>
-	<Button on:click={modal.open}>Quit</Button>
+	<Button on:click={modal.quit.open}>Quit</Button>
 </div>
 
 <Modal
-	bind:close={modal.close}
-	bind:isOpen={modal.isOpen}
-	bind:open={modal.open}
-	bind:toggle={modal.toggle}
+	bind:close={modal.quit.close}
+	bind:isOpen={modal.quit.isOpen}
+	bind:open={modal.quit.open}
+	bind:toggle={modal.quit.toggle}
 	class="space-y-8"
 >
 	<div>Are you sure you want to quit?</div>
 	<div class="grid grid-cols-2 gap-2">
-		<Button class={$theme.buttonContrast} on:click={modal.close}>Cancel</Button>
+		<Button class={$theme.buttonContrast} on:click={modal.quit.close}>Cancel</Button>
 		<A class={twMerge($theme.button, $theme.buttonError)} href="/">Quit</A>
 	</div>
 </Modal>

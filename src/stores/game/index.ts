@@ -3,7 +3,6 @@ import { writable } from 'svelte/store';
 
 // types
 type Board = (null | 'O' | 'X')[];
-type CurrentPlayer = null | 'computer' | 'user';
 type Color =
 	| 'primary'
 	| 'secondary'
@@ -14,14 +13,15 @@ type Color =
 	| 'septenary'
 	| 'octanary';
 type Order = 'random' | 'X' | 'O';
+type State = 'init' | 'computer' | 'draw' | 'lose' | 'user' | 'win';
 type Symbol = 'X' | 'O';
 
 // default values
 const defaultValues = {
 	board: [...Array(9)].map((_) => null),
 	color: 'primary',
-	currentPlayer: null,
 	order: 'random',
+	state: 'init',
 	symbol: 'X'
 };
 
@@ -35,8 +35,8 @@ const initialValues =
 const { set, subscribe, update } = writable<{
 	board: Board;
 	color: Color;
-	currentPlayer: CurrentPlayer;
 	order: Order;
+	state: State;
 	symbol: Symbol;
 }>(initialValues);
 
@@ -49,7 +49,10 @@ subscribe((state) => {
 // public methods
 const publicMethods = {
 	computer: {
-		choose: () => {
+		choose: async () => {
+			await new Promise((res) => {
+				setTimeout(res, Math.floor(Math.random() * 1500) + 500);
+			});
 			update((state) => {
 				// get dictionary of cells
 				const cellDictionary = [...state.board].reduce(
@@ -69,7 +72,7 @@ const publicMethods = {
 				const randomCellIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
 
 				state.board[randomCellIndex] = state.symbol === 'X' ? 'O' : 'X';
-				state.currentPlayer = 'user';
+				state.state = 'user';
 				return state;
 			});
 		}
@@ -78,7 +81,7 @@ const publicMethods = {
 	start: () => {
 		update((state) => {
 			state.board = [...Array(9)].map((_) => null);
-			state.currentPlayer =
+			state.state =
 				(state.order === 'random' && Math.random() < 0.5) || state.order === state.symbol
 					? 'user'
 					: 'computer';
@@ -91,8 +94,8 @@ const publicMethods = {
 		cell: (cellIndex: number) => {
 			update((state) => {
 				state.board[cellIndex] =
-					state.currentPlayer === 'user' ? state.symbol : state.symbol === 'X' ? 'O' : 'X';
-				state.currentPlayer = state.currentPlayer === 'user' ? 'computer' : 'user';
+					state.state === 'user' ? state.symbol : state.symbol === 'X' ? 'O' : 'X';
+				state.state = state.state === 'user' ? 'computer' : 'user';
 				return state;
 			});
 		}
